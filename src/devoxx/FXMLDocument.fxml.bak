@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="1080.0" prefWidth="1920.0" xmlns:fx="http://javafx.com/fxml" fx:controller="devoxx.FXMLDocumentController">
+  <children>
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="BLACK" height="1080.0" layoutX="0.0" layoutY="0.0" stroke="BLACK" strokeType="INSIDE" width="1920.0" />
+    <ImageView id="blackbaner" layoutX="245.0" layoutY="-1.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/blackbaner.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <Label id="title1" fx:id="sessionLbl" graphicTextGap="4.0" layoutX="1315.0" layoutY="32.0" text="SESSION" textAlignment="LEFT">
+      <font>
+        <Font size="83.0" fx:id="x1" />
+      </font>
+      <textFill>
+        <Color blue="0.878" green="0.910" red="0.937" fx:id="x2" />
+      </textFill>
+    </Label>
+    <Label id="title2" fx:id="roomLbl" font="$x1" layoutX="1435.0" layoutY="106.0" text="ROOM" textAlignment="LEFT" textFill="$x2" />
+    <Label fx:id="roomNumber" layoutX="1742.0" layoutY="5.0" text="5" textFill="$x2">
+      <font>
+        <Font size="195.0" />
+      </font>
+    </Label>
+    <Line endX="1794.0" endY="1.0" layoutX="115.0" layoutY="207.0" startX="-100.0" stroke="$x2" />
+    <Rectangle arcHeight="5.0" arcWidth="5.0" height="173.0" layoutX="58.0" layoutY="252.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="1229.0">
+      <fill>
+        <Color blue="0.192" green="0.682" red="0.965" fx:id="x6" />
+      </fill>
+    </Rectangle>
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="$x2" height="609.0" layoutX="58.0" layoutY="425.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="1229.0" />
+    <Rectangle arcHeight="5.0" arcWidth="5.0" height="200.0" layoutX="1323.0" layoutY="250.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="572.7071533203125">
+      <fill>
+        <Color blue="0.741" green="0.714" red="0.310" fx:id="x4" />
+      </fill>
+    </Rectangle>
+    <ImageView id="bluebanner" layoutX="1397.0" layoutY="250.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/bluebanner.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="$x2" height="551.0" layoutX="1323.0" layoutY="483.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="572.7071533203125" />
+    <Label id="currentTime" fx:id="currentTimeTitleLbl" layoutX="1340.0" layoutY="262.0" text="CURRENT TIME:">
+      <font>
+        <Font size="40.0" fx:id="x3" />
+      </font>
+    </Label>
+    <Label fx:id="time" layoutX="1429.0" layoutY="317.0" text="5:55 PM">
+      <font>
+        <Font size="90.0" />
+      </font>
+    </Label>
+    <ImageView id="orangebanner" layoutX="408.0" layoutY="252.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/orangebanner.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="551.0" layoutX="1006.0" layoutY="411.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="251.0" />
+    <ImageView id="speakertip" layoutX="1006.0" layoutY="962.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/speakertip.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <ImageView id="beigeBig" layoutX="504.0" layoutY="425.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/beigeBig.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <ImageView id="beigeBig" layoutX="1362.0" layoutY="483.0" pickOnBounds="true">
+      <image>
+        <Image url="@images/beigeBig.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <Label id="title" fx:id="sessionTitle" layoutX="98.0" layoutY="268.0" prefHeight="147.0" prefWidth="987.0" text="JAVA, CHESS, AND THE INTERNET OF THINGS TESTING VERY LONG TITLE" textFill="$x2" wrapText="true">
+      <font>
+        <Font size="45.0" />
+      </font>
+    </Label>
+    <Label fx:id="sessionTime" layoutX="105.0" layoutY="975.0" text="WED 10:55 - 11:30 AM" textFill="$x4">
+      <font>
+        <Font size="30.0" />
+      </font>
+    </Label>
+    <Label id="abstract" fx:id="sessionAbstract" layoutX="122.0" layoutY="473.0" prefHeight="455.0" prefWidth="785.0" text="With the new ARM support for Java SE and ME, Java can run on embedded devices from large to small, letting your code interact with the physical world. We will show you how Java server and client technologies can work together to build an end-to-end scenario that enables cloud-powered devices for the Internet of Things. This presentation will include demonstrations of JavaFX 3D technology on desktop and embedded, the new Java Device API for interacting with physical sensors and motors, and Java EE 7 features for cloud integration, all themed around chess as the universal geek game of choice... &quot;Shall we play a game?&quot;" textAlignment="JUSTIFY" wrapText="true">
+      <font>
+        <Font size="28.0" />
+      </font>
+    </Label>
+    <Label id="" fx:id="sessionsTitleLbl" font="$x3" layoutX="1340.0" layoutY="497.0" text="SESSIONS:" />
+    <VBox alignment="CENTER" layoutX="1350.0" layoutY="559.0" prefHeight="440.0" prefWidth="520.0" spacing="5.0">
+      <children>
+        <VBox prefHeight="200.0" prefWidth="520.0">
+          <children>
+            <Label fx:id="talk1Time" prefWidth="520.0" text="WED 10:55 - 11:30 AM" textFill="$x6">
+              <font>
+                <Font size="30.5" />
+              </font>
+            </Label>
+            <Label fx:id="talk1Title" alignment="TOP_LEFT" contentDisplay="TOP" prefHeight="149.0" prefWidth="520.0" text="Java, Chess and the Internet of Things Makiing this very very long" wrapText="true">
+              <font>
+                <Font size="35.0" />
+              </font>
+            </Label>
+          </children>
+        </VBox>
+        <Pane prefHeight="25.0" prefWidth="520.0">
+          <children>
+            <Separator layoutX="-11.0" layoutY="3.0" prefWidth="542.0" />
+          </children>
+        </Pane>
+        <VBox prefHeight="120.0" prefWidth="520.0">
+          <children>
+            <Label fx:id="talk2Time" text="WED 12:00 - 1:00 PM" textFill="$x6">
+              <font>
+                <Font size="23.0" fx:id="x5" />
+              </font>
+            </Label>
+            <Label fx:id="talk2Title" alignment="TOP_LEFT" prefHeight="80.0" prefWidth="517.0" text="Fault tolerance made easy" wrapText="true">
+              <font>
+                <Font size="25.0" fx:id="x7" />
+              </font>
+            </Label>
+          </children>
+        </VBox>
+        <VBox prefHeight="120.0" prefWidth="520.0">
+          <children>
+            <Label fx:id="talk3Time" font="$x5" text="WED 1:30 - 2:30PM" textFill="$x6" />
+            <Label fx:id="talk3Title" alignment="TOP_LEFT" font="$x7" prefHeight="73.0" prefWidth="517.0" text="Android: Pushing The Limits" wrapText="true" />
+          </children>
+        </VBox>
+      </children>
+    </VBox>
+    <ImageView id="logo" layoutX="58.0" layoutY="83.0" onMouseClicked="#quitApp" onTouchPressed="#quitApp" pickOnBounds="true">
+      <image>
+        <Image url="@images/logo.png" preserveRatio="true" smooth="true" />
+      </image>
+    </ImageView>
+    <VBox fx:id="speakersVBox" alignment="CENTER" layoutX="1027.0" layoutY="416.0" prefHeight="540.0" prefWidth="215.0" spacing="8.0">
+      <children>
+        <VBox id="speaker3" fx:id="speaker1" alignment="CENTER" prefHeight="180.0" prefWidth="170.0" spacing="15.0">
+          <children>
+            <ImageView id="speaker" fx:id="speakerImg1" pickOnBounds="true" scaleX="1.2" scaleY="1.2">
+              <image>
+                <Image url="@images/thumbnail.gif" preserveRatio="true" smooth="true" />
+              </image>
+            </ImageView>
+            <Label fx:id="speakerName1" text="STEPHEN CHIN">
+              <font>
+                <Font size="15.0" fx:id="x8" />
+              </font>
+            </Label>
+          </children>
+        </VBox>
+        <VBox id="speaker1" fx:id="speaker3" alignment="CENTER" prefHeight="180.0" prefWidth="170.0" spacing="15.0">
+          <children>
+            <ImageView id="speaker" fx:id="speakerImg3" pickOnBounds="true">
+              <image>
+                <Image url="@images/speaker.png" preserveRatio="true" smooth="true" />
+              </image>
+            </ImageView>
+            <Label fx:id="speakerName3" font="$x8" text="STEPHEN CHIN" />
+          </children>
+        </VBox>
+        <VBox fx:id="speaker2" alignment="CENTER" prefHeight="180.0" prefWidth="170.0" spacing="5.0">
+          <children>
+            <ImageView id="speaker" fx:id="speakerImg2" pickOnBounds="true">
+              <image>
+                <Image url="@images/speaker.png" preserveRatio="true" smooth="true" />
+              </image>
+            </ImageView>
+            <Label fx:id="speakerName2" font="$x8" text="STEPHEN CHIN" />
+          </children>
+        </VBox>
+      </children>
+    </VBox>
+  </children>
+</AnchorPane>
