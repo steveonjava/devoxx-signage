@@ -1,16 +1,17 @@
+/*
+ * Devoxx digital signage project
+ */
 package devoxx;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import static javafx.animation.Animation.INDEFINITE;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -18,80 +19,136 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
+import static javafx.animation.Animation.INDEFINITE;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+
 /**
  *
  * @author Angie
  */
 public class Devoxx extends Application {
 
-    private Date currentTimeOverride = null;// new Date(113, 10, 11);
-    private FXMLDocumentController myScreenControler;
-    private double SCALE = 1;
-
+    private final static Logger logger
+        = Logger.getLogger(Devoxx.class.getName());
+    private final static ConsoleHandler consoleHandler = new ConsoleHandler();
+    private final List<Presentation> newPresentations = new ArrayList<>();
+    private ControlProperties controlProperties;
+    private FXMLDocumentController screenController;
     private String roomNumber;
-
-    private Presentation currentPresentation = null;
-    private Presentation firstPreso, secondPreso, thirdPreso;
+    private DataFetcher dataFetcher;
     private List<Presentation> presentations;
-    private static DateFormat DEBUG_DATE_FORMAT = DateFormat.getDateTimeInstance();
-    private static DateFormat TIME24_FORMAT = new SimpleDateFormat("HH:mm");
-    
+    private Presentation currentPresentation = null;
+    private Presentation firstPresentation;
+    private Presentation secondPresentation;
+    private Presentation thirdPresentation;
+
+    /**
+     * Entry point for the JavaFX application lifecycle
+     *
+     * @param stage Where to present the scene
+     * @throws Exception If there is an error
+     */
     @Override
     public void start(Stage stage) throws Exception {
-         String myroom = getParameters().getRaw().isEmpty() ? null : getParameters().getRaw().get(0);
-        if (myroom == null || myroom.isEmpty()) {
-            myroom = "Room 8";
+        List<String> parameters = getParameters().getRaw();
+        String room = parameters.isEmpty() ? null : getParameters().getRaw().get(0);
+
+        if (room == null || room.isEmpty()) {
+            System.out.println("Please specify a room to display");
+            System.exit(1);
         }
-        final String room = myroom;
-        final boolean testMode = getParameters().getRaw().size() >= 2 && getParameters().getRaw().get(1).equals("test");
-        System.out.println("=========================================================");
-        System.out.println("== DEVOXX DISPLAY APP for room [" + room + "]");
-        if (testMode) {
-            SCALE = 0.75;
-            System.out.println(" !!!! TEST MODE !!!!");
+
+        String propertiesFile = null;
+
+        if (parameters.size() > 1) {
+            propertiesFile = parameters.get(1);
         }
-        System.out.println("=========================================================");
 
-        // FETCH DATA
-        presentations = new DataFetcher(room).getData();
-        System.out.println("******** SIZE: " + presentations.size());
+        controlProperties = new ControlProperties(propertiesFile);
+        logger.setLevel(controlProperties.getLoggingLevel());
+        logger.setUseParentHandlers(false);
+        consoleHandler.setLevel(controlProperties.getLoggingLevel());
+        logger.addHandler(consoleHandler);
 
-        System.out.println("ROOM NUMBER = [" + room.split("\\s+")[1] + "]");
-        roomNumber = (room.split("\\s+")[1]);
+        logger.fine("===================================================");
+        logger.fine("=== DEVOXX DISPLAY APP for [" + room + "]");
 
-        FXMLLoader myLoader = new FXMLLoader(getClass().getResource("FXMLDocument.fxml"));
+        if (controlProperties.isTestMode()) {
+            logger.finest("=== RUNNING IN TEST MODE...");
+        }
+
+        logger.fine("===================================================");
+
+        /* Fetch the data from the Web service */
+        dataFetcher = new DataFetcher(logger, controlProperties, room);
+
+        /* If the first read fails we don't really have any way to continue */
+        if (!dataFetcher.updateData()) {
+            System.err.println("Error retrieving initial data from server");
+            System.err.println("Bailing out!");
+            System.exit(1);
+        }
+
+        presentations = dataFetcher.getPresentationList();
+
+        /**
+         * IMPORTANT:
+         *
+         * If you use this code for a venue that uses different naming for the
+         * rooms you will need to change this. Devoxx BE uses rooms with a
+         * single digit number and two BOF rooms.
+         */
+        if (room.startsWith("room")) {
+            roomNumber = room.substring("room".length());
+        } else if (room.startsWith("bof")) {
+            roomNumber = "BOF" + room.substring("bof".length());
+        } else {
+            logger.severe("Room name not recognised (must be roomX or bofX)");
+            System.exit(4);
+        }
+
+        FXMLLoader myLoader
+            = new FXMLLoader(getClass().getResource("FXMLDocument.fxml"));
         Parent root = (Parent) myLoader.load();
-        myScreenControler = ((FXMLDocumentController) myLoader.getController());
-        root.setScaleX(SCALE);
-        root.setScaleY(SCALE);
+        screenController = ((FXMLDocumentController) myLoader.getController());
+
+        if (controlProperties.isTestMode()) {
+            root.setScaleX(controlProperties.getTestScale());
+            root.setScaleY(controlProperties.getTestScale());
+        }
 
         Scene scene = new Scene(root);
+        scene.setOnKeyPressed(e -> handleKeyPress(e));
         scene.setFill(null);
         stage.initStyle(StageStyle.UNDECORATED);
         stage.setScene(scene);
-       // stage.setFullScreen(true);
+        // stage.setFullScreen(true);
         stage.show();
-        myScreenControler.setRoom(roomNumber);
-      //  update();
-        Timeline downloadTimeline = new Timeline(new KeyFrame(Duration.minutes(30), new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                 List<Presentation> newPresentations = new DataFetcher(room).getData();
-                if (newPresentations != null) {
-                    presentations = newPresentations;
+
+        screenController.setRoom(roomNumber);
+    //  update();
+
+        /* Use a Timeline to periodically check for any updates to the published
+         * data in case of last minute changes
+         */
+        Timeline downloadTimeline = new Timeline(new KeyFrame(
+            Duration.minutes(controlProperties.getDataRefreshTime()),
+            (ActionEvent t) -> {
+                if (dataFetcher.updateData()) {
+                    update();
                 }
-                update();
-            }
-        }));
+            }));
         downloadTimeline.setCycleCount(INDEFINITE);
         downloadTimeline.play();
-        
-        Timeline updateTimeline = new Timeline(new KeyFrame(Duration.minutes(1), new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                update();
-            }
-        }));
+
+        /* Use another timeline to periodically update the screen display so 
+         * the time changes and the session information correctly reflects what's
+         * happening
+         */
+        Timeline updateTimeline = new Timeline(new KeyFrame(
+            Duration.seconds(controlProperties.getScreenRefreshTime()),
+            (ActionEvent t) -> update()));
         updateTimeline.setCycleCount(INDEFINITE);
         updateTimeline.getKeyFrames().get(0).getOnFinished().handle(null);
         updateTimeline.play();
@@ -109,36 +166,68 @@ public class Devoxx extends Application {
         launch(args);
     }
 
+    /**
+     * Update the display
+     */
     private void update() {
-        Date now = (currentTimeOverride != null) ? currentTimeOverride : new Date();
-        System.out.println("NOW = " + now + "  - currentTimeOverride = " + currentTimeOverride);
-        List<Presentation> newPresentations = new ArrayList<>();
+        LocalDateTime now;
+
+        if (controlProperties.isTestMode()) {
+            now = LocalDateTime.of(
+                controlProperties.getStartDate()
+                .plusDays(controlProperties.getTestDay()),
+                controlProperties.getTestTime());
+        } else {
+            now = LocalDateTime.now();
+        }
+
+        logger.finer("Date and time of update = " + now);
+        newPresentations.clear();
+
         for (Presentation presentation : presentations) {
-            if (now.before(presentation.toTime)) {
+            if (now.isBefore(presentation.toTime)) {
                 newPresentations.add(presentation);
             }
+
             if (newPresentations.size() >= 3) {
                 break;
             }
         }
-        firstPreso = newPresentations.size() >= 1 ? newPresentations.get(0) : null;
-        secondPreso = newPresentations.size() >= 2 ? newPresentations.get(1) : null;
-        thirdPreso = newPresentations.size() >= 3 ? newPresentations.get(2) : null;
-        System.out.println("UPDATE @ (" + DEBUG_DATE_FORMAT.format(now) + ")");
-        if (currentPresentation != firstPreso) {
-            currentPresentation = firstPreso;
-            myScreenControler.setScreenData(firstPreso, secondPreso, thirdPreso);
-        }
 
+        firstPresentation
+            = newPresentations.size() >= 1 ? newPresentations.get(0) : null;
+        secondPresentation
+            = newPresentations.size() >= 2 ? newPresentations.get(1) : null;
+        thirdPresentation
+            = newPresentations.size() >= 3 ? newPresentations.get(2) : null;
+        logger.fine("Screen update @ (" + now + ")");
+
+        if (currentPresentation != firstPresentation) {
+            currentPresentation = firstPresentation;
+            screenController.setScreenData(
+                firstPresentation, secondPresentation, thirdPresentation);
+            logger.finer("New presentation: " + firstPresentation);
+
+            if (secondPresentation != null) {
+                logger.finer("Second presentation: " + secondPresentation);
+            }
+
+            if (thirdPresentation != null) {
+                logger.finer("Third presentation: " + thirdPresentation);
+            }
+        }
     }
 
-    private void goNext() {
-        int index = presentations.indexOf(currentPresentation);
-        if (index == presentations.size() - 2) {
-            index = -1;
+    /**
+     * Add a simple way to exit the app. Obviously you need to plug a keyboard
+     * in, but it's better than pulling out the power lead and hoping you don't
+     * corrupt the file system or having to SSH in.
+     *
+     * @param keyEvent The details of which key was pressed
+     */
+    private void handleKeyPress(KeyEvent keyEvent) {
+        if (keyEvent.getCode() == KeyCode.Q) {
+            System.exit(0);
         }
-        Presentation p = presentations.get(index + 1);
-        currentTimeOverride = p.fromTime;
-        update();
     }
 }

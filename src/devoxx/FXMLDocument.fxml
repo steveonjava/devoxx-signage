@@ -10,15 +10,15 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="1080.0" prefWidth="1920.0" xmlns:fx="http://javafx.com/fxml" fx:controller="devoxx.FXMLDocumentController">
+<AnchorPane id="AnchorPane" prefHeight="1080.0" prefWidth="1920.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="devoxx.FXMLDocumentController">
   <children>
     <Rectangle arcHeight="5.0" arcWidth="5.0" fill="BLACK" height="1080.0" layoutX="0.0" layoutY="0.0" stroke="BLACK" strokeType="INSIDE" width="1920.0" />
     <ImageView id="blackbaner" layoutX="245.0" layoutY="-1.0" pickOnBounds="true">
       <image>
-        <Image url="@images/blackbaner.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/blackbaner.png" />
       </image>
     </ImageView>
-    <Label id="title1" fx:id="sessionLbl" graphicTextGap="4.0" layoutX="1315.0" layoutY="32.0" text="SESSION" textAlignment="LEFT">
+    <Label id="title1" fx:id="sessionLbl" graphicTextGap="4.0" layoutX="1319.0" layoutY="32.0" text="SESSION" textAlignment="LEFT">
       <font>
         <Font size="83.0" fx:id="x1" />
       </font>
@@ -26,7 +26,7 @@
         <Color blue="0.878" green="0.910" red="0.937" fx:id="x2" />
       </textFill>
     </Label>
-    <Label id="title2" fx:id="roomLbl" font="$x1" layoutX="1435.0" layoutY="106.0" text="ROOM" textAlignment="LEFT" textFill="$x2" />
+    <Label id="title2" fx:id="roomLbl" font="$x1" layoutX="1430.0" layoutY="106.0" text="ROOM" textAlignment="LEFT" textFill="$x2" />
     <Label fx:id="roomNumber" layoutX="1742.0" layoutY="5.0" text="5" textFill="$x2">
       <font>
         <Font size="195.0" />
@@ -46,7 +46,7 @@
     </Rectangle>
     <ImageView id="bluebanner" layoutX="1397.0" layoutY="250.0" pickOnBounds="true">
       <image>
-        <Image url="@images/bluebanner.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/bluebanner.png" />
       </image>
     </ImageView>
     <Rectangle arcHeight="5.0" arcWidth="5.0" fill="$x2" height="551.0" layoutX="1323.0" layoutY="483.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="572.7071533203125" />
@@ -62,23 +62,23 @@
     </Label>
     <ImageView id="orangebanner" layoutX="408.0" layoutY="252.0" pickOnBounds="true">
       <image>
-        <Image url="@images/orangebanner.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/orangebanner.png" />
       </image>
     </ImageView>
-    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="551.0" layoutX="1006.0" layoutY="411.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="251.0" />
-    <ImageView id="speakertip" layoutX="1006.0" layoutY="962.0" pickOnBounds="true">
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="598.0" layoutX="1006.0" layoutY="381.0" opacity="1.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="251.0" />
+    <ImageView id="speakertip" layoutX="1006.0" layoutY="979.0" pickOnBounds="true">
       <image>
-        <Image url="@images/speakertip.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/speakertip.png" />
       </image>
     </ImageView>
     <ImageView id="beigeBig" layoutX="504.0" layoutY="425.0" pickOnBounds="true">
       <image>
-        <Image url="@images/beigeBig.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/beigeBig.png" />
       </image>
     </ImageView>
     <ImageView id="beigeBig" layoutX="1362.0" layoutY="483.0" pickOnBounds="true">
       <image>
-        <Image url="@images/beigeBig.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/beigeBig.png" />
       </image>
     </ImageView>
     <Label id="title" fx:id="sessionTitle" layoutX="98.0" layoutY="268.0" prefHeight="147.0" prefWidth="987.0" text="JAVA, CHESS, AND THE INTERNET OF THINGS TESTING VERY LONG TITLE" textFill="$x2" wrapText="true">
@@ -142,16 +142,16 @@
     </VBox>
     <ImageView id="logo" layoutX="58.0" layoutY="77.0" onMouseClicked="#quitApp" onTouchPressed="#quitApp" pickOnBounds="true">
       <image>
-        <Image url="@images/logo.png" preserveRatio="true" smooth="true" />
+        <Image preserveRatio="true" smooth="true" url="@images/logo.png" />
       </image>
     </ImageView>
-    <VBox fx:id="speakersVBox" alignment="CENTER" layoutX="1027.0" layoutY="416.0" prefHeight="540.0" prefWidth="215.0" spacing="8.0">
+    <VBox fx:id="speakersVBox" alignment="CENTER" layoutX="1017.0" layoutY="391.0" prefHeight="580.0" prefWidth="230.0" spacing="8.0">
       <children>
         <VBox id="speaker3" fx:id="speaker1" alignment="CENTER" prefHeight="180.0" prefWidth="170.0" spacing="15.0">
           <children>
             <ImageView id="speaker" fx:id="speakerImg1" pickOnBounds="true" scaleX="1.2" scaleY="1.2">
               <image>
-                <Image url="@images/thumbnail.gif" preserveRatio="true" smooth="true" />
+                <Image preserveRatio="true" smooth="true" url="@images/thumbnail.gif" />
               </image>
             </ImageView>
             <Label fx:id="speakerName1" text="STEPHEN CHIN">
@@ -165,7 +165,7 @@
           <children>
             <ImageView id="speaker" fx:id="speakerImg3" pickOnBounds="true">
               <image>
-                <Image url="@images/speaker.png" preserveRatio="true" smooth="true" />
+                <Image preserveRatio="true" smooth="true" url="@images/speaker.png" />
               </image>
             </ImageView>
             <Label fx:id="speakerName3" font="$x8" text="STEPHEN CHIN" />
@@ -175,7 +175,7 @@
           <children>
             <ImageView id="speaker" fx:id="speakerImg2" pickOnBounds="true">
               <image>
-                <Image url="@images/speaker.png" preserveRatio="true" smooth="true" />
+                <Image preserveRatio="true" smooth="true" url="@images/speaker.png" />
               </image>
             </ImageView>
             <Label fx:id="speakerName2" font="$x8" text="STEPHEN CHIN" />

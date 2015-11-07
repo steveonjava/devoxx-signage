@@ -35,55 +35,66 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
- * A SAX/Pull style parser for JSON. It provides event call backs as it reads 
- * the JSON stream keeping only the minimal state needed to provide key/value 
+ * A SAX/Pull style parser for JSON. It provides event call backs as it reads
+ * the JSON stream keeping only the minimal state needed to provide key/value
  * pairs and a depth.
- * 
- * Designed to be very small and light weight and as fast as possible even 
+ *
+ * Designed to be very small and light weight and as fast as possible even
  * without a JIT.
  */
 public class JSONParserJP {
-    private static enum Type {STRING,NUMBER,BOOLEAN,NULL};
-    
+
+    private static enum Type {
+
+        STRING, NUMBER, BOOLEAN, NULL
+    };
+
     /**
      * Parses the given url and prints out the callback events to aid debugging.
-     * 
+     *
+     * @param logger Where to log messages to
      * @param url The url to load and parse
      */
-    public static void debugParse(String url) {
+    public static void debugParse(Logger logger, String url) {
         try {
-            parse(url, new PrintCallback(System.out));
+            parse(logger, url, new PrintCallback(System.out));
         } catch (IOException ex) {
             ex.printStackTrace(System.out);
         }
     }
-    
+
     /**
      * Parses the given url and fires the data into the given callback.
-     * 
+     *
+     * @param logger Where to log messages
      * @param url The url to load and parse
-     * @param callback a generic callback to receive the parse events
+     * @param fileName
      * @throws IOException if thrown by the stream
      */
-    public static void download(String url, String fileName) throws IOException {
-        InputStream in = null;
+    public static void download(Logger logger, String url, String fileName)
+        throws IOException {
+        InputStream in;
+
         try {
             final URL urlObj = new URL(url);
-            HttpURLConnection connection = (HttpURLConnection)urlObj.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
             in = connection.getInputStream();
-            File tempFile = new File(fileName + ".tmp");;
+            File tempFile = new File(fileName + ".tmp");
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String line = br.readLine();
-            BufferedWriter os = new BufferedWriter(new FileWriter (tempFile));
-            while (line!= null) {
-                os.write(line);
-                os.write('\n');
-                line = br.readLine();
+
+            try (BufferedWriter os = new BufferedWriter(new FileWriter(tempFile))) {
+                while (line != null) {
+                    os.write(line);
+                    os.write('\n');
+                    line = br.readLine();
+                }
             }
-            os.close();
             in.close();
             File destFile = new File(fileName);
             destFile.delete();
@@ -92,33 +103,38 @@ public class JSONParserJP {
             System.out.println("INTERNET IS DOWN, USING CACHED DATA.  :)");
         }
     }
-    
+
     /**
-     * Parses the given url and fires the data into the given callback.
-     * 
-     * @param url The url to load and parse
-     * @param callback a generic callback to receive the parse events
+     * Parses the given file and fires the data into the given callback.
+     *
+     * @param logger Where to log messages to
+     * @param fileName The file to parse
+     * @param callback The callback class to use
      * @throws IOException if thrown by the stream
      */
-    public static void parse(String fileName, Callback callback) throws IOException {
+    public static void parse(Logger logger, String fileName, Callback callback)
+        throws IOException {
         InputStream in = null;
+
         try {
             in = new FileInputStream(new File(fileName));
-            parse(new BufferedReader(new InputStreamReader(in,"UTF-8")), callback);
+            parse(new BufferedReader(new InputStreamReader(in, "UTF-8")), callback);
         } catch (IOException ex) {
-            if (in != null) in.close();
+            if (in != null) {
+                in.close();
+            }
             throw ex;
         }
     }
-    
-    private static final int NORMAL           = 0;
-    private static final int QUOTE            = 1;
-    private static final int QUOTE_ESCAPE     = 2;
-    private static final int QUOTE_UNICODE    = 3;
-    private static final int NULL             = 4;
-    private static final int TRUE             = 5;
-    private static final int FALSE            = 6;
-    
+
+    private static final int NORMAL = 0;
+    private static final int QUOTE = 1;
+    private static final int QUOTE_ESCAPE = 2;
+    private static final int QUOTE_UNICODE = 3;
+    private static final int NULL = 4;
+    private static final int TRUE = 5;
+    private static final int FALSE = 6;
+
     /**
      * Parses the given input reader and fires the data into the given callback.
      *
@@ -128,7 +144,7 @@ public class JSONParserJP {
      */
     public static void parse(Reader reader, Callback callback) throws IOException {
         Type valueType = null;
-        List<String> blocks = new ArrayList<String>();
+        List<String> blocks = new ArrayList<>();
         String potentialObjectName = null;
         String currentObjectName;
         int depth = 0;
@@ -148,10 +164,12 @@ public class JSONParserJP {
                     charCount = reader.read(buffer);
                     index = 0;
                     // check if we reached the end of stream
-                    if (charCount < 0) return;
+                    if (charCount < 0) {
+                        return;
+                    }
                 }
-                char c = (char) buffer [index++];
-                switch(state) {
+                char c = (char) buffer[index++];
+                switch (state) {
                     case NORMAL:
                         switch (c) {
                             case 'n':
@@ -163,11 +181,11 @@ public class JSONParserJP {
                                 keywordCharCount = 1;
                                 continue;
                             case 'f':
-                                // this can either be the start of "false" or the end of a
+                // this can either be the start of "false" or the end of a
                                 // fraction numberValue...
                                 if (charBufferLength > 0) {
-                                    if(charBufferLength == charBuffer.length) {
-                                        char[] newCharBuffer = new char[charBuffer.length*2];
+                                    if (charBufferLength == charBuffer.length) {
+                                        char[] newCharBuffer = new char[charBuffer.length * 2];
                                         System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                                         charBuffer = newCharBuffer;
                                     }
@@ -185,21 +203,22 @@ public class JSONParserJP {
                                 currentObjectName = potentialObjectName;
                                 blocks.add(currentObjectName);
                                 callback.startObject(currentObjectName, depth);
-                                depth ++;
+                                depth++;
                                 potentialObjectName = null;
                                 continue;
                             case '}':
                                 // end any pending item
-                                currentToken = new String(charBuffer,0,charBufferLength);
+                                currentToken = new String(charBuffer, 0, charBufferLength);
                                 if (currentToken.startsWith("Play Framework")) {
                                     System.out.println("currentToken = " + currentToken);
-                                    System.out.println("charBuffer = " + charBuffer);
+                                    System.out.println("charBuffer = "
+                                        + Arrays.toString(charBuffer));
                                 }
                                 if (potentialObjectName != null) {
                                     // IS KEY VALUE
                                     callback.keyValue(potentialObjectName, currentToken, depth);
-                                } else if(valueType != null) {
-                                    switch(valueType) {
+                                } else if (valueType != null) {
+                                    switch (valueType) {
                                         case NULL:
                                             callback.stringValue(null, depth);
                                             break;
@@ -207,17 +226,21 @@ public class JSONParserJP {
                                             callback.stringValue(currentToken, depth);
                                             break;
                                         case BOOLEAN:
-                                            callback.booleanValue(currentToken != null && currentToken.trim().equalsIgnoreCase("true"), depth);
+                                            callback.booleanValue(
+                                                currentToken.trim().equalsIgnoreCase("true"), depth);
                                             break;
                                         case NUMBER:
                                             try {
-                                                callback.numberValue(Double.parseDouble(currentToken),depth);
-                                            } catch (NumberFormatException err) { /* this isn't a numberValue! */ }
+                                                callback.numberValue(Double.parseDouble(currentToken),
+                                                    depth);
+                                            } catch (NumberFormatException err) {
+                                                /* this isn't a numberValue! */
+                                            }
                                             break;
                                     }
                                 }
                                 // remove depth
-                                depth --;
+                                depth--;
                                 // send end object
                                 String closingName = null;
                                 if (blocks.size() > 0) {
@@ -233,17 +256,17 @@ public class JSONParserJP {
                                 currentObjectName = potentialObjectName;
                                 blocks.add(currentObjectName);
                                 callback.startArray(currentObjectName, depth);
-                                depth ++;
+                                depth++;
                                 potentialObjectName = null;
                                 continue;
                             case ']':
                                 // end any pending item
-                                currentToken = new String(charBuffer,0,charBufferLength);
+                                currentToken = new String(charBuffer, 0, charBufferLength);
                                 if (potentialObjectName != null) {
                                     // IS KEY VALUE
                                     callback.keyValue(potentialObjectName, currentToken, depth);
-                                } else if(valueType != null) {
-                                    switch(valueType) {
+                                } else if (valueType != null) {
+                                    switch (valueType) {
                                         case NULL:
                                             callback.stringValue(null, depth);
                                             break;
@@ -251,17 +274,21 @@ public class JSONParserJP {
                                             callback.stringValue(currentToken, depth);
                                             break;
                                         case BOOLEAN:
-                                            callback.booleanValue(currentToken != null && currentToken.trim().equalsIgnoreCase("true"), depth);
+                                            callback.booleanValue(
+                                                currentToken.trim().equalsIgnoreCase("true"), depth);
                                             break;
                                         case NUMBER:
                                             try {
-                                                callback.numberValue(Double.parseDouble(currentToken),depth);
-                                            } catch (NumberFormatException err) { /* this isn't a numberValue! */ }
+                                                callback.numberValue(Double.parseDouble(currentToken),
+                                                    depth);
+                                            } catch (NumberFormatException err) {
+                                                /* this isn't a numberValue! */
+                                            }
                                             break;
                                     }
                                 }
                                 // remove depth
-                                depth --;
+                                depth--;
                                 // send end array
                                 closingName = null;
                                 if (blocks.size() > 0) {
@@ -284,16 +311,16 @@ public class JSONParserJP {
                                 state = QUOTE;
                                 continue;
                             case ':':
-                                potentialObjectName = new String(charBuffer,0,charBufferLength);
+                                potentialObjectName = new String(charBuffer, 0, charBufferLength);
                                 charBufferLength = 0;
                                 continue;
                             case ',':
-                                currentToken = new String(charBuffer,0,charBufferLength);
+                                currentToken = new String(charBuffer, 0, charBufferLength);
                                 if (potentialObjectName != null) {
                                     // IS KEY VALUE
                                     callback.keyValue(potentialObjectName, currentToken, depth);
-                                } else if(valueType != null) {
-                                    switch(valueType) {
+                                } else if (valueType != null) {
+                                    switch (valueType) {
                                         case NULL:
                                             callback.stringValue(null, depth);
                                             break;
@@ -305,7 +332,7 @@ public class JSONParserJP {
                                             break;
                                         case NUMBER:
                                             try {
-                                                callback.numberValue(Double.parseDouble(currentToken),depth);
+                                                callback.numberValue(Double.parseDouble(currentToken), depth);
                                             } catch (NumberFormatException err) { /* this isn't a numberValue! */ }
                                             break;
                                     }
@@ -329,8 +356,8 @@ public class JSONParserJP {
                             case 'd':
                             case 'l':
                                 valueType = Type.NUMBER;
-                                if(charBufferLength == charBuffer.length) {
-                                    char[] newCharBuffer = new char[charBuffer.length*2];
+                                if (charBufferLength == charBuffer.length) {
+                                    char[] newCharBuffer = new char[charBuffer.length * 2];
                                     System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                                     charBuffer = newCharBuffer;
                                 }
@@ -349,8 +376,8 @@ public class JSONParserJP {
                                 state = QUOTE_ESCAPE;
                                 continue;
                         }
-                        if(charBufferLength == charBuffer.length) {
-                            char[] newCharBuffer = new char[charBuffer.length*2];
+                        if (charBufferLength == charBuffer.length) {
+                            char[] newCharBuffer = new char[charBuffer.length * 2];
                             System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                             charBuffer = newCharBuffer;
                         }
@@ -372,8 +399,8 @@ public class JSONParserJP {
                                 c = '\t';
                                 break;
                         }
-                        if(charBufferLength == charBuffer.length) {
-                            char[] newCharBuffer = new char[charBuffer.length*2];
+                        if (charBufferLength == charBuffer.length) {
+                            char[] newCharBuffer = new char[charBuffer.length * 2];
                             System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                             charBuffer = newCharBuffer;
                         }
@@ -384,8 +411,8 @@ public class JSONParserJP {
                         unicode += c;
                         if (unicode.length() == 4) {
                             c = (char) Integer.parseInt(unicode, 16);
-                            if(charBufferLength == charBuffer.length) {
-                                char[] newCharBuffer = new char[charBuffer.length*2];
+                            if (charBufferLength == charBuffer.length) {
+                                char[] newCharBuffer = new char[charBuffer.length * 2];
                                 System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                                 charBuffer = newCharBuffer;
                             }
@@ -396,34 +423,46 @@ public class JSONParserJP {
                     case NULL:
                         switch (keywordCharCount) {
                             case 1:
-                                if (c != 'u') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'u' of \"null\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'u') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'u' of \"null\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 2:
-                                if (c != 'l') throw new IOException("JSON Parse exception: found '"+c+"' when expected 1st 'l' of \"null\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'l') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 1st 'l' of \"null\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 3:
-                                if (c != 'l') throw new IOException("JSON Parse exception: found '"+c+"' when expected 2nd 'l' of \"null\" at char["+index+"] of buffer +\n"+new String(buffer));
+                                if (c != 'l') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 2nd 'l' of \"null\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
                                 valueType = Type.NULL;
                                 state = NORMAL;
                                 continue;
                         }
-                        throw new IOException("JSON Parse exception: in unexpected state at char["+index+"] of buffer +\n"+new String(buffer));
+                        throw new IOException("JSON Parse exception: in unexpected state at char[" + index + "] of buffer +\n" + new String(buffer));
                     case TRUE:
                         switch (keywordCharCount) {
                             case 1:
-                                if (c != 'r') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'r' of \"true\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'r') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'r' of \"true\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 2:
-                                if (c != 'u') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'u' of \"true\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'u') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'u' of \"true\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 3:
-                                if (c != 'e') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'e' of \"true\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                if(charBufferLength+4 >= charBuffer.length) {
-                                    char[] newCharBuffer = new char[charBuffer.length*2];
+                                if (c != 'e') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'e' of \"true\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                if (charBufferLength + 4 >= charBuffer.length) {
+                                    char[] newCharBuffer = new char[charBuffer.length * 2];
                                     System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                                     charBuffer = newCharBuffer;
                                 }
@@ -435,25 +474,33 @@ public class JSONParserJP {
                                 state = NORMAL;
                                 continue;
                         }
-                        throw new IOException("JSON Parse exception: in unexpected state at char["+index+"] of buffer +\n"+new String(buffer));
+                        throw new IOException("JSON Parse exception: in unexpected state at char[" + index + "] of buffer +\n" + new String(buffer));
                     case FALSE:
                         switch (keywordCharCount) {
                             case 1:
-                                if (c != 'a') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'a' of \"false\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'a') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'a' of \"false\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 2:
-                                if (c != 'l') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'l' of \"false\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 'l') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'l' of \"false\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 3:
-                                if (c != 's') throw new IOException("JSON Parse exception: found '"+c+"' when expected 's' of \"false\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                keywordCharCount ++;
+                                if (c != 's') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 's' of \"false\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                keywordCharCount++;
                                 continue;
                             case 4:
-                                if (c != 'e') throw new IOException("JSON Parse exception: found '"+c+"' when expected 'e' of \"false\" at char["+index+"] of buffer +\n"+new String(buffer));
-                                if(charBufferLength+5 >= charBuffer.length) {
-                                    char[] newCharBuffer = new char[charBuffer.length*2];
+                                if (c != 'e') {
+                                    throw new IOException("JSON Parse exception: found '" + c + "' when expected 'e' of \"false\" at char[" + index + "] of buffer +\n" + new String(buffer));
+                                }
+                                if (charBufferLength + 5 >= charBuffer.length) {
+                                    char[] newCharBuffer = new char[charBuffer.length * 2];
                                     System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
                                     charBuffer = newCharBuffer;
                                 }
@@ -466,7 +513,7 @@ public class JSONParserJP {
                                 state = NORMAL;
                                 continue;
                         }
-                        throw new IOException("JSON Parse exception: in unexpected state at char["+index+"] of buffer +\n"+new String(buffer));
+                        throw new IOException("JSON Parse exception: in unexpected state at char[" + index + "] of buffer +\n" + new String(buffer));
                 }
             }
         } catch (IOException ex) {
@@ -474,139 +521,182 @@ public class JSONParserJP {
             throw ex;
         }
     }
-    
+
     public static interface Callback {
+
         /**
-        * Indicates that the parser ran into start of object '{'
-        * 
-        * @param objectName if this object is value of key/value pair the 
-        *                   this is the key name, otherwise its null
-        * @param depth      The current depth, number of parent objects and  
-        *                   arrays that contain this object
-        */
+         * Indicates that the parser ran into start of object '{'
+         *
+         * @param objectName if this object is value of key/value pair the this
+         * is the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this object
+         */
         public void startObject(String objectName, int depth);
 
         /**
-        * Indicates that the parser ran into end of object '}'
-        * 
-        * @param objectName if this object is value of key/value pair the 
-        *                   this is the key name, otherwise its null
-        * @param depth      The current depth, number of parent objects and  
-        *                   arrays that contain this object
-        */
+         * Indicates that the parser ran into end of object '}'
+         *
+         * @param objectName if this object is value of key/value pair the this
+         * is the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this object
+         */
         public void endObject(String objectName, int depth);
 
         /**
-        * Indicates that the parser ran into start of array '['
-        * 
-        * @param arrayName  if this array is value of key/value pair the 
-        *                   this is the key name, otherwise its null
-        * @param depth      The current depth, number of parent objects and  
-        *                   arrays that contain this array
-        */
+         * Indicates that the parser ran into start of array '['
+         *
+         * @param arrayName if this array is value of key/value pair the this is
+         * the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this array
+         */
         public void startArray(String arrayName, int depth);
 
         /**
-        * Indicates that the parser ran into start of array ']'
-        * 
-        * @param arrayName  if this array is value of key/value pair the 
-        *                   this is the key name, otherwise its null
-        * @param depth      The current depth, number of parent objects and  
-        *                   arrays that contain this array
-        */
+         * Indicates that the parser ran into start of array ']'
+         *
+         * @param arrayName if this array is value of key/value pair the this is
+         * the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this array
+         */
         public void endArray(String arrayName, int depth);
 
         /**
-        * Submits a string vale from the JSON data, a JSON null is passed 
-        * as (value == null)
-        */
+         * Submits a string vale from the JSON data, a JSON null is passed as
+         * (value == null)
+         */
         public void stringValue(String value, int depth);
 
         /**
-        * Submits a numeric value from the JSON data
-        */
+         * Submits a numeric value from the JSON data
+         */
         public void numberValue(double value, int depth);
-        
+
         /**
-        * Submits a boolean value from the JSON data
-        */
+         * Submits a boolean value from the JSON data
+         */
         public void booleanValue(boolean value, int depth);
 
         /**
-        * This method is called when a key/value pair is detected within the json.
-        *
-        * @param key the key
-        * @param value a stringValue value
-        */
+         * This method is called when a key/value pair is detected within the
+         * json.
+         *
+         * @param key the key
+         * @param value a stringValue value
+         */
         public void keyValue(String key, String value, int depth);
 
         /**
-        * This method indicates if the parsing job is canceled
-        * 
-        * @return true if the parser should stop where it is
-        */
+         * This method indicates if the parsing job is canceled
+         *
+         * @return true if the parser should stop where it is
+         */
         public boolean isCanceled();
     }
-    
+
     public static class PrintCallback implements Callback {
+
         private String indent = "";
         private final PrintStream out;
-        
+
         public PrintCallback(PrintStream out) {
             this.out = out;
         }
 
-        @Override public void startObject(String blockName, int depth) {
-            out.println(indent+"startObject("+blockName+","+depth+")");
+        @Override
+        public void startObject(String blockName, int depth) {
+            out.println(indent + "startObject(" + blockName + "," + depth + ")");
             indent += "    ";
         }
 
-        @Override public void endObject(String blockName, int depth) {
-            indent = indent.substring(0, indent.length()-4);
-            out.println(indent+"endObject("+blockName+","+depth+")");
+        @Override
+        public void endObject(String blockName, int depth) {
+            indent = indent.substring(0, indent.length() - 4);
+            out.println(indent + "endObject(" + blockName + "," + depth + ")");
         }
 
-        @Override public void startArray(String arrayName, int depth) {
-            out.println(indent+"startArray("+arrayName+","+depth+")");
+        @Override
+        public void startArray(String arrayName, int depth) {
+            out.println(indent + "startArray(" + arrayName + "," + depth + ")");
             indent += "    ";
         }
 
-        @Override public void endArray(String arrayName, int depth) {
-            indent = indent.substring(0, indent.length()-4);
-            out.println(indent+"endArray("+arrayName+","+depth+")");
+        @Override
+        public void endArray(String arrayName, int depth) {
+            indent = indent.substring(0, indent.length() - 4);
+            out.println(indent + "endArray(" + arrayName + "," + depth + ")");
         }
 
-        @Override public void stringValue(String value, int depth) {
-            out.println(indent+"stringValue("+value+","+depth+")");
+        @Override
+        public void stringValue(String value, int depth) {
+            out.println(indent + "stringValue(" + value + "," + depth + ")");
         }
 
-        @Override public void numberValue(double value, int depth) {
-            out.println(indent+"numberValue["+value+","+depth+")");
-        }
-        
-        @Override public void booleanValue(boolean value, int depth) {
-            out.println(indent+"booleanValue["+value+","+depth+")");
+        @Override
+        public void numberValue(double value, int depth) {
+            out.println(indent + "numberValue[" + value + "," + depth + ")");
         }
 
-        @Override public void keyValue(String key, String value, int depth) {
-            out.println(indent+"keyValue("+key+" => "+value+","+depth+")");
+        @Override
+        public void booleanValue(boolean value, int depth) {
+            out.println(indent + "booleanValue[" + value + "," + depth + ")");
         }
 
-        @Override public boolean isCanceled() { return false; }
+        @Override
+        public void keyValue(String key, String value, int depth) {
+            out.println(indent + "keyValue(" + key + " => " + value + "," + depth + ")");
+        }
+
+        @Override
+        public boolean isCanceled() {
+            return false;
+        }
     }
-    
+
     /**
-     * An adapter to make it cleaner in implementations that don't need to implement everything.
+     * An adapter to make it cleaner in implementations that don't need to
+     * implement everything.
      */
     public static abstract class CallbackAdapter implements Callback {
-        @Override public void startObject(String objectName, int depth) { }
-        @Override public void endObject(String objectName, int depth) { }
-        @Override public void startArray(String arrayName, int depth) { }
-        @Override public void endArray(String arrayName, int depth) { }
-        @Override public void stringValue(String value, int depth) { }
-        @Override public void numberValue(double value, int depth) { }
-        @Override public void booleanValue(boolean value, int depth) { }
-        @Override public void keyValue(String key, String value, int depth) { }
-        @Override public boolean isCanceled() { return false; }
+
+        @Override
+        public void startObject(String objectName, int depth) {
+        }
+
+        @Override
+        public void endObject(String objectName, int depth) {
+        }
+
+        @Override
+        public void startArray(String arrayName, int depth) {
+        }
+
+        @Override
+        public void endArray(String arrayName, int depth) {
+        }
+
+        @Override
+        public void stringValue(String value, int depth) {
+        }
+
+        @Override
+        public void numberValue(double value, int depth) {
+        }
+
+        @Override
+        public void booleanValue(boolean value, int depth) {
+        }
+
+        @Override
+        public void keyValue(String key, String value, int depth) {
+        }
+
+        @Override
+        public boolean isCanceled() {
+            return false;
+        }
     }
 }

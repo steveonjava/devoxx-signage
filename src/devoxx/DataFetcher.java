@@ -1,86 +1,126 @@
+/*
+ * Devoxx digital signage project
+ */
 package devoxx;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import devoxx.JSONParserJP.CallbackAdapter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Class for loading all session data from devoxx server
- * 
+ *
  * @author Jasper Potts
  */
 public class DataFetcher {
-    private static DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
-    private Map<String,Speaker> speakerMap = new HashMap<>();
-    private Map<String,Presentation> presentationMap = new HashMap<>();
-    private final String appRoom;
 
-    public DataFetcher(String room) {
-        this.appRoom = room;
+    private static final String[] day = {
+        "monday", "tuesday", "wednesday", "thursday", "friday"
+    };
+
+//  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm");
+    private final Map<String, Speaker> speakerMap = new HashMap<>();
+    private final Map<String, Presentation> presentationMap = new HashMap<>();
+    private final List<Presentation> presentations = new ArrayList<>();
+    private final Logger logger;
+    private final String room;
+    private final String devoxxHost;
+    private final LocalDate startDate;
+    private final String imageCache;
+
+    /**
+     * Constructor
+     *
+     * @param logger Where to log messages to
+     * @param controlProperties control properties
+     * @param room Which room to get data for
+     */
+    public DataFetcher(Logger logger, ControlProperties controlProperties,
+        String room) {
+        this.logger = logger;
+        this.room = room;
+        devoxxHost = controlProperties.getDevoxxHost();
+        imageCache = controlProperties.getImageCache();
+        startDate = controlProperties.getStartDate();
     }
-    
-    public List<Presentation> getData() {
-        System.out.println("datafetcher getting data for " + appRoom);
-        // GET ALL SPEAKERS FIRST
-        String room = appRoom.split("\\s+")[0].toLowerCase() + appRoom.split("\\s+")[1];
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/speakers", "speakers.json");
-            JSONParserJP.parse("speakers.json",new SpeakerCallcack());
-        } catch (Exception e) { 
-            e.printStackTrace(); return null;}
-        System.out.println("");
-        // THEN GET ALL Sessions (for Monday)
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/rooms/" + room + "/monday", "schedule-monday.json");
-            JSONParserJP.parse("schedule-monday.json", new SessionCallcack());
-        } catch (Exception e) { e.printStackTrace(); return null; }
-        // THEN GET ALL Sessions (and Tuesday)
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/rooms/" + room + "/tuesday", "schedule-tuesday.json");
-            JSONParserJP.parse("schedule-tuesday.json", new SessionCallcack());
-        } catch (Exception e) { e.printStackTrace(); return null; }
-        // THEN GET ALL Sessions (and Wednesday)
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/rooms/" + room + "/wednesday", "schedule-wednesday.json");
-            JSONParserJP.parse("schedule-wednesday.json", new SessionCallcack());
-        } catch (Exception e) { e.printStackTrace(); return null; }
-        // THEN GET ALL Sessions (and Thursday)
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/rooms/" + room + "/thursday", "schedule-thursday.json");
-            JSONParserJP.parse("schedule-thursday.json", new SessionCallcack());
-        } catch (Exception e) { e.printStackTrace(); return null; }
-        // THEN GET ALL Sessions (and Friday)
-        try{
-            JSONParserJP.download("http://cfp.devoxx.be/api/conferences/DevoxxBe2014/rooms/" + room + "/friday", "schedule-friday.json");
-            JSONParserJP.parse("schedule-friday.json", new SessionCallcack());
-        } catch (Exception e) { e.printStackTrace(); return null; }
-        System.out.println("");
-        
-        System.out.println("");
-        System.out.println("FOUND ["+speakerMap.size()+"] SPEAKERS");
-        System.out.println("fetcher FOUND ["+presentationMap.size()+"] PRESENTATIONS");
-        System.out.println("");
-        
-        // SORT PRESENTATIONS BY TIME
-        List<Presentation> presentations = new ArrayList<>(presentationMap.values());
-        Collections.sort(presentations, new Comparator<Presentation>() {
-            @Override public int compare(Presentation o1, Presentation o2) {
-                return o1.fromTime.compareTo(o2.fromTime);
-            }
-        });
+
+    /**
+     * Get the list of presentations for the chosen room
+     *
+     * @return
+     */
+    public List<Presentation> getPresentationList() {
         return presentations;
     }
-    
-    private class SpeakerCallcack extends JSONParserJP.CallbackAdapter {
+
+    /**
+     * Try to update the data from the Devoxx CFP web service
+     *
+     * @return Whether the update suceeded or failed
+     */
+    public boolean updateData() {
+        logger.fine("Retrieving data for room " + room);
+
+        /* First get all the speakers data */
+        String dataUrl;
+
+        try {
+            logger.finer("Retrieving speaker data...");
+            dataUrl = devoxxHost + "speakers";
+            JSONParserJP.download(logger, dataUrl, "speakers.json");
+            JSONParserJP.parse(logger, "speakers.json", new SpeakerCallcack());
+        } catch (Exception e) {
+            logger.severe("Failed to retrieve speaker data!");
+            logger.severe(e.getMessage());
+            return false;
+        }
+
+        logger.info("Found [" + speakerMap.size() + "] SPEAKERS");
+
+        /* Now retrieve all the session data for the week */
+        for (int i = 0; i < 5; i++) {
+            try {
+                logger.finer("Retrieving data for " + day[i]);
+                dataUrl = devoxxHost + "rooms/" + room + "/" + day[i];
+                logger.finest(day[i] + " URL = " + dataUrl);
+                String jsonString = "schedule-" + day[i] + ".json";
+                JSONParserJP.download(logger, dataUrl, jsonString);
+                JSONParserJP.parse(logger, jsonString, new SessionCallcack());
+            } catch (Exception e) {
+                logger.severe("Failed to retrieve schedule for " + day[i]);
+                logger.severe(e.getMessage());
+            }
+        }
+
+        if (presentationMap.isEmpty()) {
+            logger.severe("Error: No presentation data downloaded!");
+            return false;
+        }
+
+        logger.info("Found [" + presentationMap.size() + "] PRESENTATIONS\n");
+
+        /* Sort the presentation by time.  I'm not sure this is really
+         * necessary given the size of the data set (SR)
+         */
+        presentations.addAll(presentationMap.values());
+        Collections.sort(presentations,
+            (s1, s2) -> s1.fromTime.compareTo(s2.fromTime));
+        return true;
+    }
+
+    /**
+     * Callback class for handling Devoxx speaker JSON data
+     */
+    private class SpeakerCallcack extends CallbackAdapter {
+
         private String uuid;
         private String firstName;
         private String lastName;
@@ -88,49 +128,93 @@ public class DataFetcher {
         private String bio;
         private String imageUrl;
         private String twitter;
-        private boolean rockStar = false;
-        
-        @Override public void keyValue(String key, String value, int depth) {
-            if(depth == 2) {
-                if ("uuid".equals(key)) {
-                    uuid = value;
-                } else if ("lastName".equals(key)) {
-                    lastName = value;
-                } else if ("firstName".equals(key)) {
-                    firstName = value;
-                } else if ("bio".equals(key)) {
-                    bio = value;
-                } else if ("company".equals(key)) {
-                    company = value;
-                } else if ("avatarURL".equals(key)) {
-                    imageUrl = value;
+        private boolean rockStar;
+
+        /**
+         * Key value pair detected in the JSON data
+         *
+         * @param key The key
+         * @param value The value
+         * @param depth The depth of the key/value
+         */
+        @Override
+        public void keyValue(String key, String value, int depth) {
+            if (depth == 2) {
+                if (null != key) {
+                    switch (key) {
+                        case "uuid":
+                            uuid = value;
+                            break;
+                        case "lastName":
+                            lastName = value;
+                            break;
+                        case "firstName":
+                            firstName = value;
+                            break;
+                        case "bio":
+                            bio = value;
+                            break;
+                        case "company":
+                            company = value;
+                            break;
+                        case "avatarURL":
+                            imageUrl = value;
+                            break;
+                    }
                 }
             }
         }
-        @Override public void endObject(String objectName, int depth) {
-            if(depth == 1) {
+
+        /**
+         * Indicates that the parser ran into end of object '}'
+         *
+         * @param objectName if this object is value of key/value pair the this
+         * is the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this object
+         */
+        @Override
+        public void endObject(String objectName, int depth) {
+            logger.finest("End speaker object found: " + firstName + " " + lastName);
+
+            if (depth == 1) {
                 Speaker speaker = speakerMap.get(uuid);
+
                 if (speaker == null) {
-                    speaker = new Speaker(uuid,firstName+" "+lastName,imageUrl);
-                    speakerMap.put(uuid,speaker);
+                    logger.finest("Speaker is null, adding new speaker");
+                    speaker = new Speaker(logger, uuid, firstName + " " + lastName,
+                        imageUrl, imageCache);
+                    speakerMap.put(uuid, speaker);
                 }
             }
         }
     }
-        
-    private class SessionCallcack extends JSONParserJP.CallbackAdapter {
+
+    /**
+     * Callback class for handling Devoxx session JSON data
+     */
+    private class SessionCallcack extends CallbackAdapter {
+
+        private final List<Speaker> speakers = new ArrayList<>();
         public String id;
         private String summary;
-        private List<Speaker> speakers = new ArrayList<>();
         private String type;
         private String track;
         private String title;
         private String room;
-        private Date start,end;
+        private LocalDateTime start;
+        private LocalDateTime end;
         private int length;
-        private int count = 0;
 
-        @Override public void keyValue(String key, String value, int depth) {
+        /**
+         * Key value pair detected in the JSON data
+         *
+         * @param key The key
+         * @param value The value
+         * @param depth The depth of the key/value
+         */
+        @Override
+        public void keyValue(String key, String value, int depth) {
             if (depth == 4 && "id".equals(key)) {
                 id = value;
             } else if (depth == 4 && "summary".equals(key)) {
@@ -140,9 +224,12 @@ public class DataFetcher {
             } else if (depth == 4 && "talkType".equals(key)) {
                 type = value;
             } else if (depth == 7 && "href".equals(key)) {
-                Speaker speaker = speakerMap.get(value.substring(value.lastIndexOf('/') + 1));
+                Speaker speaker
+                    = speakerMap.get(value.substring(value.lastIndexOf('/') + 1));
+
                 if (speaker == null) {
-                    System.out.println("Failed to load: " + value.substring(value.lastIndexOf('/') + 1));
+                    logger.finer("Failed to load: "
+                        + value.substring(value.lastIndexOf('/') + 1));
                 } else {
                     speakers.add(speaker);
                 }
@@ -150,67 +237,88 @@ public class DataFetcher {
                 room = value;
             } else if (depth == 4 && "title".equals(key)) {
                 title = value;
+                logger.finest("Title = " + title);
             } else if (depth == 3 && "fromTime".equals(key)) {
-                try {
-                    start = DATE_FORMAT.parse(value);
-                } catch (ParseException ex) {
-                    ex.printStackTrace();
-                }
+                logger.finest("Session start time = " + value);
+                LocalTime startTime
+                    = LocalTime.parse(value, DateTimeFormatter.ISO_LOCAL_TIME);
+                start = LocalDateTime.of(startDate, startTime);
             } else if (depth == 3 && "toTime".equals(key)) {
-                try {
-                    end = DATE_FORMAT.parse(value);
-                } catch (ParseException ex) {
-                    ex.printStackTrace();
-                }
+                logger.finest("Session end time = " + value);
+                LocalTime startTime
+                    = LocalTime.parse(value, DateTimeFormatter.ISO_LOCAL_TIME);
+                end = LocalDateTime.of(startDate, startTime);
             } else if (depth == 3 && "day".equals(key)) {
-                start.setYear(2014 - 1900);
-                start.setMonth(11 - 1);
-                end.setYear(2014 - 1900);
-                end.setMonth(11 - 1);
+                logger.finest("Day = " + value);
+
+                /**
+                 * Process which day it is.
+                 */
                 switch (value) {
                     case "monday":
-                        start.setDate(10);
-                        end.setDate(10);
                         break;
                     case "tuesday":
-                        start.setDate(11);
-                        end.setDate(11);
+                        start = start.plusDays(1);
+                        end = end.plusDays(1);
                         break;
                     case "wednesday":
-                        start.setDate(12);
-                        end.setDate(12);
+                        start = start.plusDays(2);
+                        end = end.plusDays(2);
                         break;
                     case "thursday":
-                        start.setDate(13);
-                        end.setDate(13);
+                        start = start.plusDays(3);
+                        end = end.plusDays(3);
                         break;
                     case "friday":
-                        start.setDate(14);
-                        end.setDate(14);
+                        start = start.plusDays(4);
+                        end = end.plusDays(4);
                         break;
                     default:
                         throw new IllegalStateException("unknown day: " + value);
                 }
             }
         }
-        
-        @Override public void endObject(String objectName, int depth) {
-            if(depth == 2 && title != null) {
-                length = (int)((end.getTime()/60000) - (start.getTime()/60000));
-                Presentation presentation = new Presentation(id, title, room, start, end, length);
+
+        /**
+         * Indicates that the parser ran into end of object '}'
+         *
+         * @param objectName if this object is value of key/value pair the this
+         * is the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this object
+         */
+        @Override
+        public void endObject(String objectName, int depth) {
+            if (depth == 2 && title != null) {
+                /* XXX LETS COME BACK AND FIGURE THIS OUT LATER */
+                length = 0;
+
+                Presentation presentation
+                    = new Presentation(logger, id, title, room, start, end, length);
                 presentationMap.put(
                     id,
-                    presentation
-                );
-                presentation.setExtended(summary, speakers.toArray(new Speaker[speakers.size()]), track, type);
+                    presentation);
+                presentation.setExtended(
+                    summary,
+                    speakers.toArray(new Speaker[speakers.size()]),
+                    track,
+                    type);
             }
         }
 
-        @Override public void startObject(String objectName, int depth) {
-            if(depth == 2) {
+        /**
+         * Indicates that the parser ran into start of object '{'
+         *
+         * @param objectName if this object is value of key/value pair the this
+         * is the key name, otherwise its null
+         * @param depth The current depth, number of parent objects and arrays
+         * that contain this object
+         */
+        @Override
+        public void startObject(String objectName, int depth) {
+            if (depth == 2) {
                 speakers.clear();
             }
         }
     }
-    
 }
