@@ -27,7 +27,7 @@
       </textFill>
     </Label>
     <Label id="title2" fx:id="roomLbl" font="$x1" layoutX="1430.0" layoutY="106.0" text="ROOM" textAlignment="LEFT" textFill="$x2" />
-    <Label fx:id="roomNumber" layoutX="1742.0" layoutY="5.0" text="5" textFill="$x2">
+    <Label fx:id="roomNumber" layoutX="1742.0" layoutY="5.0" text="5" textAlignment="RIGHT" textFill="$x2">
       <font>
         <Font size="195.0" />
       </font>

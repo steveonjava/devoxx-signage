@@ -228,6 +228,10 @@ public class FXMLDocumentController implements Initializable {
             roomNumber.setTranslateY(30);
             sessionLbl.setTranslateX(-150);
             roomLbl.setTranslateX(-150);
+        } else if (room.equals("10")) {
+            roomNumber.setTranslateX(-70);
+            sessionLbl.setTranslateX(-70);
+            roomLbl.setTranslateX(-70);
         } else {
             roomNumber.setFont(Font.font("Arial", FontWeight.BOLD, 195));
         }
