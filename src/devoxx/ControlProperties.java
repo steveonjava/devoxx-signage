@@ -138,6 +138,8 @@ public class ControlProperties {
 
         if (value != null) {
             imageCache = value;
+        } else {
+            imageCache = System.getProperty("user.home") + "/.devoxx-signage";
         }
 
         /* What mode to run in: real or test */

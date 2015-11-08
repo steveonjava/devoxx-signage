@@ -10,9 +10,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -48,7 +50,7 @@ public class Speaker {
         this.fullName = fullName;
         imageUrlString = downloadURL;
 
-        String photoFileName = cache + uuid + ".jpg";
+        String photoFileName = cache + File.separatorChar + uuid + ".jpg";
 
         /* Load the image from the cache if it's available, otherwise go out 
          * to the URL, load it and cache it.
@@ -77,17 +79,19 @@ public class Speaker {
             try {
                 URL imageURL = new URL(imageUrlString);
 
-                try (DataInputStream photoInputStream
-                    = new DataInputStream(imageURL.openStream());
-                    FileOutputStream cacheFileOutputStream
-                    = new FileOutputStream(cacheFile)) {
+                if (!Files.exists(Paths.get(cache), LinkOption.NOFOLLOW_LINKS)) {
+                    Files.createDirectory(Paths.get(cache));
+                }
+                final URLConnection connection = imageURL.openConnection();
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+                try (DataInputStream photoInputStream = new DataInputStream(connection.getInputStream());
+                    FileOutputStream cacheFileOutputStream = new FileOutputStream(cacheFile)) {
                     BufferedImage photoBufferedImage = ImageIO.read(photoInputStream);
                     ImageIO.write(photoBufferedImage, "jpg", cacheFileOutputStream);
                 }
             } catch (Exception ioe) {
-                logger.warning("Unable to read photo for " + fullName
-                    + " from " + imageUrlString);
-                logger.warning(ioe.getMessage());
+                logger.log(Level.WARNING, "Unable to read photo for " + fullName
+                    + " from " + imageUrlString, ioe);
             }
         }
 
