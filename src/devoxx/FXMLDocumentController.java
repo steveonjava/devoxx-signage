@@ -160,7 +160,7 @@ public class FXMLDocumentController implements Initializable {
                 speakerBox.setSpacing(5);
                 HBox photoBox = new HBox();
                 photoBox.setAlignment(Pos.CENTER);
-                photoBox.getChildren().add(speaker.photo);
+                photoBox.getChildren().add(speaker.getPhoto());
                 speakerBox.getChildren().add(photoBox);
 
                 HBox nameBox = new HBox();

@@ -29,12 +29,13 @@ import javax.imageio.ImageIO;
  * @author Jasper Potts
  */
 public class Speaker {
+    private final Logger logger;
 
     public final String uuid;
     public final String fullName;
-    public String imageUrlString;
+    public String downloadURL;
     public Image photoImage;
-    public ImageView photo;
+    private final String cache;
 
     /**
      * Constructor
@@ -47,13 +48,20 @@ public class Speaker {
      */
     public Speaker(Logger logger, String uuid, String fullName,
         String downloadURL, String cache) {
-        logger.finer("New speaker: " + fullName);
+        this.logger = logger;
         this.uuid = uuid;
         this.fullName = fullName;
-        imageUrlString = downloadURL;
+        this.downloadURL = downloadURL;
+        this.cache = cache;
 
+    }
+    
+    public ImageView getPhoto() {
+        ImageView photo;
+        
         String photoFileName = cache + File.separatorChar + uuid + ".jpg";
 
+        logger.finer("New speaker: " + fullName);
         /* Load the image from the cache if it's available, otherwise go out 
          * to the URL, load it and cache it.
          */
@@ -72,13 +80,13 @@ public class Speaker {
             if (downloadURL.contains("\\")) {
                 logger.warning("Image URL badly formed: " + downloadURL);
                 logger.warning("Trying to fix this");
-                imageUrlString = imageUrlString.replace("\\", "/");
+                downloadURL = downloadURL.replace("\\", "/");
             }
 
-            photoImage = new Image(imageUrlString, 150, 150, true, true);
+            photoImage = new Image(downloadURL, 150, 150, true, true);
 
             try {
-                URL imageURL = new URL(imageUrlString);
+                URL imageURL = new URL(downloadURL);
 
                 if (!Files.exists(Paths.get(cache), LinkOption.NOFOLLOW_LINKS)) {
                     Files.createDirectory(Paths.get(cache));
@@ -92,7 +100,7 @@ public class Speaker {
                 }
             } catch (Exception ioe) {
                 logger.log(Level.WARNING, "Unable to read photo for " + fullName
-                    + " from " + imageUrlString, ioe);
+                    + " from " + downloadURL, ioe);
             }
         }
 
@@ -111,11 +119,12 @@ public class Speaker {
             (photoImage.getHeight() - squareDim) / 2, 
             squareDim, squareDim));
         photo.setClip(new Circle(75, 75, 75));
-        logger.finest("Speaker added");
+        logger.finest("Speaker photo loaded");
+        return photo;
     }
 
     /**
-     * Siumplified toString method to just return the full name
+     * Simplified toString method to just return the full name
      *
      * @return The speaker's full name
      */
