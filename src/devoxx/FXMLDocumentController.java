@@ -147,22 +147,21 @@ public class FXMLDocumentController implements Initializable {
              */
             for (Speaker speaker : mainPreso.speakers) {
 
-                Group speakerGroup = new Group();
+                VBox speakerBox = new VBox();
+                speakerBox.setSpacing(5);
                 HBox photoBox = new HBox();
                 photoBox.setAlignment(Pos.CENTER);
                 photoBox.getChildren().add(speaker.photo);
-                speakerGroup.getChildren().add(photoBox);
-                speaker.photo.setTranslateX(15);
+                speakerBox.getChildren().add(photoBox);
 
                 HBox nameBox = new HBox();
                 nameBox.setAlignment(Pos.CENTER);
-                nameBox.setTranslateY(165);
                 Label name = new Label(speaker.fullName.toUpperCase());
                 name.setFont(lightFont);
                 nameBox.getChildren().add(name);
-                speakerGroup.getChildren().add(nameBox);
+                speakerBox.getChildren().add(nameBox);
 
-                speakersVBox.getChildren().add(speakerGroup);
+                speakersVBox.getChildren().add(speakerBox);
             }
 
             talk1Title.setText(mainPreso.title);

@@ -16,9 +16,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javax.imageio.ImageIO;
 
 /**
@@ -59,8 +61,7 @@ public class Speaker {
             logger.finest("Photo found in cache: " + photoFileName);
 
             try {
-                photoImage = new Image(
-                    new FileInputStream(photoFileName), 150, 150, true, true);
+                photoImage = new Image(new FileInputStream(photoFileName));
             } catch (FileNotFoundException ex) {
                 logger.severe("FileNotFound error, which cannot happen!");
             }
@@ -103,8 +104,12 @@ public class Speaker {
         } else {
             photo.setFitHeight(150);
         }
-
+        
         photo.setPreserveRatio(true);
+        final double squareDim = Math.min(photoImage.getWidth(), photoImage.getHeight());
+        photo.setViewport(new Rectangle2D((photoImage.getWidth() - squareDim) / 2, 
+            (photoImage.getHeight() - squareDim) / 2, 
+            squareDim, squareDim));
         photo.setClip(new Circle(75, 75, 75));
         logger.finest("Speaker added");
     }
