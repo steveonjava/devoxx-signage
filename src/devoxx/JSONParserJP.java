@@ -74,9 +74,10 @@ public class JSONParserJP {
      * @param logger Where to log messages
      * @param url The url to load and parse
      * @param fileName
+     * @return true in case we could download and parse the URL, false in case there is no Internet connection
      * @throws IOException if thrown by the stream
      */
-    public static void download(Logger logger, String url, String fileName)
+    public static boolean download(Logger logger, String url, String fileName)
         throws IOException {
         InputStream in;
 
@@ -99,9 +100,11 @@ public class JSONParserJP {
             File destFile = new File(fileName);
             destFile.delete();
             tempFile.renameTo(destFile);
+            return true;
         } catch (IOException ex) {
             System.out.println("INTERNET IS DOWN, USING CACHED DATA.  :)");
         }
+        return false;
     }
 
     /**

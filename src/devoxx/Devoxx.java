@@ -136,7 +136,10 @@ public class Devoxx extends Application {
             Duration.minutes(controlProperties.getDataRefreshTime()),
             (ActionEvent t) -> {
                 if (dataFetcher.updateData()) {
+                    screenController.setOnline();
                     update();
+                } else {
+                    screenController.setOffline();
                 }
             }));
         downloadTimeline.setCycleCount(INDEFINITE);

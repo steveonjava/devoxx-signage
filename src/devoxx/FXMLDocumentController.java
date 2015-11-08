@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -18,6 +20,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
@@ -30,6 +33,8 @@ public class FXMLDocumentController implements Initializable {
 
     private static final DateTimeFormatter TIME_FORMAT
         = DateTimeFormatter.ofPattern("HH:mm");
+    
+    private final BooleanProperty offline = new SimpleBooleanProperty(false);
 
     @FXML
     Label sessionLbl, roomLbl, roomNumber, currentTimeTitleLbl, time,
@@ -48,6 +53,8 @@ public class FXMLDocumentController implements Initializable {
     Font lightFont, qTypeBig, qTypeSml, titleThin, gothambookBig,
         gothambookMed, gothambookSml, titleHuge, titleBig, timeFont,
         roomNumberFont;
+    
+    @FXML Circle networkCircle;
 
     /**
      * Exit the application
@@ -67,6 +74,7 @@ public class FXMLDocumentController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        networkCircle.visibleProperty().bind(offline);
         /* Load fonts */
         lightFont = Font.loadFont(Devoxx.class.getResource("fonts/gothamexlight-webfont.ttf").toExternalForm(), 20);
         titleThin = Font.loadFont(Devoxx.class.getResource("fonts/gothamexlight-webfont.ttf").toExternalForm(), 40);
@@ -186,6 +194,14 @@ public class FXMLDocumentController implements Initializable {
             talk3Time.setText("");
         }
     }
+    
+    public void setOnline() {
+        offline.set(false);
+    }
+    
+    public void setOffline() {
+        offline.set(true);
+    }
 
     /**
      * Set which room data is being displayed for.
@@ -210,4 +226,5 @@ public class FXMLDocumentController implements Initializable {
 
         roomNumber.setText(room);
     }
+
 }
