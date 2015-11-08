@@ -3,10 +3,14 @@
  */
 package devoxx;
 
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
@@ -48,7 +52,7 @@ public class FXMLDocumentController implements Initializable {
     ImageView speakerImg1, speakerImg2, speakerImg3;
 
     @FXML
-    Label speakerName1, speakerName2, speakerName3;
+    Label speakerName1, speakerName2, speakerName3, ipaddress;
 
     Font lightFont, qTypeBig, qTypeSml, titleThin, gothambookBig,
         gothambookMed, gothambookSml, titleHuge, titleBig, timeFont,
@@ -74,6 +78,11 @@ public class FXMLDocumentController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        try {
+            ipaddress.setText(InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.WARNING, "Unknown IP Address", ex);
+        }
         networkCircle.visibleProperty().bind(offline);
         /* Load fonts */
         lightFont = Font.loadFont(Devoxx.class.getResource("fonts/gothamexlight-webfont.ttf").toExternalForm(), 20);

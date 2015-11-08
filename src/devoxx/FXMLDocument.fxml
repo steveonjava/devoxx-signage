@@ -183,6 +183,7 @@
         </VBox>
       </children>
     </VBox>
-      <Circle fx:id="networkCircle" fill="#ff1f1f" layoutX="75.0" layoutY="1020.0" radius="10.0" stroke="BLACK" strokeType="INSIDE" />
+      <Circle fx:id="networkCircle" fill="#ff1f1f" layoutX="1870.0" layoutY="1011.0" radius="10.0" stroke="BLACK" strokeType="INSIDE" />
+      <Label fx:id="ipaddress" layoutX="1761.0" layoutY="1003.0" text="192.168.23.172" textAlignment="RIGHT" />
   </children>
 </AnchorPane>
