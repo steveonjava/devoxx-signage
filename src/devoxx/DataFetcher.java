@@ -75,8 +75,7 @@ public class DataFetcher {
         try {
             logger.finer("Retrieving speaker data...");
             dataUrl = devoxxHost + "speakers";
-            boolean online = JSONParserJP.download(logger, dataUrl, "speakers.json");
-            if (!online) return false;
+            JSONParserJP.download(logger, dataUrl, "speakers.json");
             JSONParserJP.parse(logger, "speakers.json", new SpeakerCallcack());
         } catch (Exception e) {
             logger.severe("Failed to retrieve speaker data!");
