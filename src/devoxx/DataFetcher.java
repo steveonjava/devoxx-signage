@@ -35,7 +35,6 @@ public class DataFetcher {
   private final String devoxxHost;
   private final LocalDate startDate;
   private final String imageCache;
-  private final boolean fillImageCache;
 
   /**
    * Constructor
@@ -50,7 +49,6 @@ public class DataFetcher {
     this.room = room;
     devoxxHost = controlProperties.getDevoxxHost();
     imageCache = controlProperties.getImageCache();
-    fillImageCache = controlProperties.isCacheBeingFilled();
     startDate = controlProperties.getStartDate();
   }
 
@@ -186,10 +184,7 @@ public class DataFetcher {
           logger.finest("Speaker is null, adding new speaker");
           speaker = new Speaker(logger, uuid, firstName + " " + lastName,
               imageUrl, imageCache);
-          
-          if (fillImageCache)
-            speaker.getPhoto();
-          
+          speaker.cachePhoto();
           speakerMap.put(uuid, speaker);
         }
       }
