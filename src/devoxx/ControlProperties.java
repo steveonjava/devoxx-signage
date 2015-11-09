@@ -32,7 +32,6 @@ public class ControlProperties {
   private int screenRefreshTime = 60;
   private String dataURL = "http://cfp.devoxx.be/api/conferences/DV15/";
   private String imageCache = "/home/devoxx/speaker-images";
-  private boolean fillImageCache;
   private LocalDate startDate;
   private double testScale;
   private final int testDay;
@@ -142,12 +141,6 @@ public class ControlProperties {
     } else {
       imageCache = System.getProperty("user.home") + "/.devoxx-signage";
     }
-
-    /* Check for flag to pre-fill image cache */
-    value = properties.getProperty("fill-image-cache");
-
-    if (value != null)
-      fillImageCache = value.equalsIgnoreCase("true");
 
     /* What mode to run in: real or test */
     value = properties.getProperty("operating-mode");
@@ -268,15 +261,6 @@ public class ControlProperties {
    */
   public String getImageCache() {
     return imageCache;
-  }
-
-  /**
-   * Do we want the image cache to be filled?
-   * 
-   * @return True to download and cache all speaker photos
-   */
-  public boolean isCacheBeingFilled() {
-    return fillImageCache;
   }
   
   /**
