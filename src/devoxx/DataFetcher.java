@@ -110,6 +110,7 @@ public class DataFetcher {
     /* Sort the presentation by time.  I'm not sure this is really
      * necessary given the size of the data set (SR)
      */
+    presentations.clear();
     presentations.addAll(presentationMap.values());
     Collections.sort(presentations,
         (s1, s2) -> s1.fromTime.compareTo(s2.fromTime));
@@ -299,6 +300,7 @@ public class DataFetcher {
         presentationMap.put(
             id,
             presentation);
+          System.out.println("presentation = " + presentation.title);
         presentation.setExtended(
             summary,
             speakers.toArray(new Speaker[speakers.size()]),

@@ -34,8 +34,8 @@ public class ControlProperties {
   private String imageCache = "/home/devoxx/speaker-images";
   private LocalDate startDate;
   private double testScale;
-  private final int testDay;
-  private final LocalTime testTime;
+  private int testDay;
+  private LocalTime testTime;
 
   /**
    * Constructor
@@ -297,5 +297,19 @@ public class ControlProperties {
    */
   public LocalTime getTestTime() {
     return testTime;
+  }
+  
+  public void incrementTestTime() {
+      testTime = getTestTime().plusHours(1);
+      if (getTestTime().isBefore(LocalTime.of(1, 0))) {
+          testDay++;
+      }
+  }
+  
+  public void decrementTestTime() {
+      if (getTestTime().isBefore(LocalTime.of(1, 0))) {
+          testDay--;
+      }
+      testTime = getTestTime().minusHours(1);
   }
 }

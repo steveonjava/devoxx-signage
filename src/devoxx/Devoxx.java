@@ -4,6 +4,7 @@
 package devoxx;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
@@ -134,14 +135,7 @@ public class Devoxx extends Application {
          */
         Timeline downloadTimeline = new Timeline(new KeyFrame(
             Duration.minutes(controlProperties.getDataRefreshTime()),
-            (ActionEvent t) -> {
-                if (dataFetcher.updateData()) {
-                    screenController.setOnline();
-                    update();
-                } else {
-                    screenController.setOffline();
-                }
-            }));
+            (ActionEvent t) -> updateData()));
         downloadTimeline.setCycleCount(INDEFINITE);
         downloadTimeline.play();
 
@@ -155,6 +149,15 @@ public class Devoxx extends Application {
         updateTimeline.setCycleCount(INDEFINITE);
         updateTimeline.getKeyFrames().get(0).getOnFinished().handle(null);
         updateTimeline.play();
+    }
+
+    private void updateData() {
+        if (dataFetcher.updateData()) {
+            screenController.setOnline();
+            update();
+        } else {
+            screenController.setOffline();
+        }
     }
 
     /**
@@ -231,6 +234,14 @@ public class Devoxx extends Application {
     private void handleKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.Q) {
             System.exit(0);
+        } else if (keyEvent.getCode() == KeyCode.LEFT) {
+            controlProperties.decrementTestTime();
+        } else if (keyEvent.getCode() == KeyCode.RIGHT) {
+            controlProperties.incrementTestTime();
+        } else if (keyEvent.getCode() == KeyCode.U) {
+            update();
+        } else if (keyEvent.getCode() == KeyCode.D) {
+            updateData();
         }
     }
 }
